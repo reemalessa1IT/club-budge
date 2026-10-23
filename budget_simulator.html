@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي الميزانية والحاسبة التجريبية | Budget Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#6d4aa8',
+                            purpleDark: '#543785',
+                            teal: '#2f9e8f',
+                            tealLight: '#e6f7f5',
+                            darkBg: '#0f172a',
+                            darkCard: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar for tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2f9e8f;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300 pb-12">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-brand-purple/10 text-brand-purple dark:bg-brand-purple/20 dark:text-purple-300 rounded-xl">
+                    <i class="fa-solid fa-calculator text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-800 dark:text-white">حاسبة ومحاكي الميزانية التجريبية</h1>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400">بيئة تجارب معزولة (Sandbox) – لا تؤثر على الميزانية الحقيقية</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition">
+                    <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+                
+                <!-- Reset Simulator -->
+                <button onclick="resetSimulation()" class="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 font-bold text-sm transition">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span class="hidden sm:inline">إعادة ضبط</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- Sandbox Banner -->
+        <div class="bg-gradient-to-r from-brand-purple to-slate-800 text-white rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="relative z-10 flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40 text-lg">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </span>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-400/30">وضع المحاكاة نشط</span>
+                        <span class="text-xs text-slate-300">أرقام افتراضية فقط</span>
+                    </div>
+                    <p class="text-sm text-slate-200 mt-0.5">يمكنك خصم واقتطاع المبالغ واختبار سيناريوهات الصرف بكل حرية.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl border border-white/10 w-full sm:w-auto justify-center">
+                <i class="fa-solid fa-circle-info text-emerald-300"></i>
+                <span>التغييرات محلية وتختفي عند إعادة التعيين</span>
+            </div>
+        </div>
+
+        <!-- Section 1: Budget Setup & Deductions (2 Columns) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Card 1: Club Budget Allocation -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm relative space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-3 h-8 bg-brand-purple rounded-full"></div>
+                        <h2 class="font-extrabold text-lg text-slate-800 dark:text-white">ميزانية النادي (الأصلية)</h2>
+                    </div>
+                    <span class="text-xs font-bold text-brand-purple bg-brand-purple/10 px-2.5 py-1 rounded-lg">النادي</span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">المبلغ الكلي لميزانية النادي (ريال)</label>
+                        <div class="relative">
+                            <input type="number" id="clubTotalInput" value="10000" oninput="calculateAllowedBudget()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-800 dark:text-white font-black text-lg focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                            <span class="absolute left-3 top-3 text-xs font-bold text-slate-400">ريال</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-purple-50/50 dark:bg-slate-900/50 border border-purple-100 dark:border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-bold text-slate-700 dark:text-slate-300">المبلغ المراد اقتطاعه/تخصيصه بالسحب:</span>
+                            <span id="clubDeductValueDisplay" class="font-black text-brand-purple">2,000 ريال</span>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input type="number" id="clubDeductInput" value="2000" oninput="calculateAllowedBudget()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                            <!-- Preset Percentages -->
+                            <div class="flex gap-1">
+                                <button onclick="setPercentDeduct('club', 10)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-purple transition">10%</button>
+                                <button onclick="setPercentDeduct('club', 25)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-purple transition">25%</button>
+                                <button onclick="setPercentDeduct('club', 50)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-purple transition">50%</button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
+                            <span>المتبقي في النادي بعد الاقتطاع:</span>
+                            <span id="clubRemainingDisplay" class="font-bold text-slate-700 dark:text-slate-200">8,000 ريال</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Sponsors Budget Allocation -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700/80 shadow-sm relative space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700/60 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-3 h-8 bg-brand-teal rounded-full"></div>
+                        <h2 class="font-extrabold text-lg text-slate-800 dark:text-white">ميزانية الرعاة (الأصلية)</h2>
+                    </div>
+                    <span class="text-xs font-bold text-brand-teal bg-brand-teal/10 px-2.5 py-1 rounded-lg">الرعاة</span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">المبلغ الكلي لميزانية الرعاة (ريال)</label>
+                        <div class="relative">
+                            <input type="number" id="sponsorsTotalInput" value="15000" oninput="calculateAllowedBudget()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-800 dark:text-white font-black text-lg focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                            <span class="absolute left-3 top-3 text-xs font-bold text-slate-400">ريال</span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-teal-50/50 dark:bg-slate-900/50 border border-teal-100 dark:border-slate-700 space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="font-bold text-slate-700 dark:text-slate-300">المبلغ المراد اقتطاعه/تخصيصه بالسحب:</span>
+                            <span id="sponsorsDeductValueDisplay" class="font-black text-brand-teal">3,000 ريال</span>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <input type="number" id="sponsorsDeductInput" value="3000" oninput="calculateAllowedBudget()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-white font-bold text-base focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                            <!-- Preset Percentages -->
+                            <div class="flex gap-1">
+                                <button onclick="setPercentDeduct('sponsors', 10)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-teal transition">10%</button>
+                                <button onclick="setPercentDeduct('sponsors', 25)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-teal transition">25%</button>
+                                <button onclick="setPercentDeduct('sponsors', 50)" class="px-2 py-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-brand-teal transition">50%</button>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 flex justify-between">
+                            <span>المتبقي في الرعاة بعد الاقتطاع:</span>
+                            <span id="sponsorsRemainingDisplay" class="font-bold text-slate-700 dark:text-slate-200">12,000 ريال</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 2: Calculated Pool / Total Allowed Box & Status Dashboard -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs">حوض الخصم المسموح</span>
+                        <h3 class="font-black text-xl text-slate-800 dark:text-white">إجمالي المبلغ المسموح بالسحب منه</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">حاصل جمع المبالغ المقتطعة (المستقطعة من النادي + المستقطعة من الرعاة)</p>
+                </div>
+                
+                <div class="text-left md:text-right w-full md:w-auto bg-slate-50 dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <span class="text-xs font-bold text-slate-400 block">سقف السحب الافتراضي المتاح</span>
+                    <span id="totalAllowedDisplay" class="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">5,000 <span class="text-sm font-normal text-slate-500">ريال</span></span>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1"><i class="fa-solid fa-hand-holding-dollar text-emerald-500 ml-1"></i> إجمالي المسحوبات الحالية</span>
+                    <span id="totalWithdrawnDisplay" class="text-2xl font-black text-slate-800 dark:text-white">0 <span class="text-xs font-normal">ريال</span></span>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1"><i class="fa-solid fa-piggy-bank text-blue-500 ml-1"></i> الرصيد المتبقي المسموح</span>
+                    <span id="remainingAllowedDisplay" class="text-2xl font-black text-emerald-600 dark:text-emerald-400">5,000 <span class="text-xs font-normal">ريال</span></span>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60">
+                    <span class="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1"><i class="fa-solid fa-chart-pie text-purple-500 ml-1"></i> نسبة استهلاك المسموح</span>
+                    <span id="usedPercentageDisplay" class="text-2xl font-black text-slate-800 dark:text-white">0%</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-bold">
+                    <span class="text-slate-500 dark:text-slate-400">مستوى السحب المنجز</span>
+                    <span id="progressText" class="text-slate-700 dark:text-slate-300">0 من 5,000 ريال</span>
+                </div>
+                <div class="w-full bg-slate-100 dark:bg-slate-700 h-3.5 rounded-full overflow-hidden p-0.5">
+                    <div id="progressBar" class="bg-brand-teal h-full rounded-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Auto Alert Banner -->
+            <div id="statusAlert" class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-xl text-emerald-500"></i>
+                <div class="text-sm">
+                    <span class="font-bold block" id="alertTitle">الوضع المالي ممتاز</span>
+                    <span class="text-xs opacity-90" id="alertMessage">جميع عمليات السحب التجريبية تغطيتها الميزانية المسموحة وبوجود فائض آمن.</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Section 3: Add Withdrawal & History Table -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Form Card: Perform New Simulated Withdrawal -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 h-fit">
+                <div class="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3">
+                    <i class="fa-solid fa-plus-circle text-brand-purple text-lg"></i>
+                    <h3 class="font-extrabold text-slate-800 dark:text-white">إضافة بند سحب محاكاة</h3>
+                </div>
+
+                <form onsubmit="addWithdrawal(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">اسم البند / جهة الصرف</label>
+                        <input type="text" id="itemName" placeholder="مثال: ضيافة حفل، مطبوعات..." required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-medium focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">مبلغ السحب (ريال)</label>
+                        <input type="number" id="itemAmount" placeholder="0" min="1" step="any" required class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">مصدر الخصم المفضل</label>
+                        <select id="itemSource" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 dark:text-white font-bold focus:outline-none focus:ring-2 focus:ring-brand-purple">
+                            <option value="عام (حوض المسموح)">عام (من حوض الخصم المسموح)</option>
+                            <option value="مخصص للنادي">خاص باقتطاع النادي</option>
+                            <option value="مخصص للرعاة">خاص باقتطاع الرعاة</option>
+                        </select>
+                    </div>
+
+                    <!-- Quick Amount Shortcuts -->
+                    <div>
+                        <span class="block text-xs font-bold text-slate-400 mb-1">مبالغ سريعة:</span>
+                        <div class="flex gap-1.5 flex-wrap">
+                            <button type="button" onclick="setQuickAmount(100)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">+100</button>
+                            <button type="button" onclick="setQuickAmount(250)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">+250</button>
+                            <button type="button" onclick="setQuickAmount(500)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">+500</button>
+                            <button type="button" onclick="setQuickAmount(1000)" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition">+1000</button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-brand-purple hover:bg-brand-purpleDark text-white font-extrabold text-sm rounded-xl shadow-md shadow-purple-500/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+                        <span>تأكيد خصم المبلغ</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Table Card: Simulated Withdrawals List -->
+            <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-brand-teal text-lg"></i>
+                            <h3 class="font-extrabold text-slate-800 dark:text-white">جدول عمليات السحب التجريبية</h3>
+                        </div>
+                        <span id="withdrawalCountBadge" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-2.5 py-1 rounded-full">0 عمليات</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar mt-4">
+                        <table class="w-full text-right text-sm">
+                            <thead>
+                                <tr class="text-xs font-black text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                                    <th class="pb-3 px-2">#</th>
+                                    <th class="pb-3 px-2">البند</th>
+                                    <th class="pb-3 px-2">المصدر</th>
+                                    <th class="pb-3 px-2">المبلغ المخصوم</th>
+                                    <th class="pb-3 px-2">الرصيد المتبقي بعدها</th>
+                                    <th class="pb-3 px-2 text-center">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawalsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                                <!-- Empty State default -->
+                                <tr id="emptyTableState">
+                                    <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                                        <i class="fa-solid fa-calculator text-4xl mb-3 block opacity-40"></i>
+                                        <p class="font-bold text-sm">لم يتم تسجيل أي عملية سحب تجريبية بعد</p>
+                                        <p class="text-xs opacity-80 mt-1">أضفي بنوداً من النموذج المقابل لاختبار تناقص الميزانية المسموحة.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer tip -->
+                <div class="pt-3 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400 flex items-center justify-between">
+                    <span>* يتم حساب الرصيد التراكمي بترتيب الإضافة</span>
+                    <button onclick="clearAllWithdrawals()" class="text-rose-500 hover:underline font-bold">مسح جميع السحوبات</button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JavaScript Simulator Logic -->
+    <script>
+        // State Management for Simulation
+        let withdrawals = [
+            { id: 1, name: "تجهيزات أولية ودعاية", amount: 1200, source: "عام (حوض المسموح)" },
+            { id: 2, name: "ضيافة المتحدثين والضيوف", amount: 800, source: "مخصص للنادي" }
+        ];
+
+        // Format Number Helper
+        function formatNumber(num) {
+            return new Intl.NumberFormat('ar-SA').format(num);
+        }
+
+        // Theme Toggle Logic
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon text-lg';
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun text-lg text-amber-400';
+            }
+        }
+
+        // Percentage Deduct Preset Helper
+        function setPercentDeduct(type, percent) {
+            if (type === 'club') {
+                const total = parseFloat(document.getElementById('clubTotalInput').value) || 0;
+                document.getElementById('clubDeductInput').value = Math.round((total * percent) / 100);
+            } else if (type === 'sponsors') {
+                const total = parseFloat(document.getElementById('sponsorsTotalInput').value) || 0;
+                document.getElementById('sponsorsDeductInput').value = Math.round((total * percent) / 100);
+            }
+            calculateAllowedBudget();
+        }
+
+        // Quick Amount Shortcut
+        function setQuickAmount(amt) {
+            const input = document.getElementById('itemAmount');
+            const current = parseFloat(input.value) || 0;
+            input.value = current + amt;
+        }
+
+        // Core Calculator Function
+        function calculateAllowedBudget() {
+            // Fetch Club Budget Inputs
+            const clubTotal = parseFloat(document.getElementById('clubTotalInput').value) || 0;
+            const clubDeduct = parseFloat(document.getElementById('clubDeductInput').value) || 0;
+            const clubRemaining = Math.max(0, clubTotal - clubDeduct);
+
+            // Fetch Sponsors Budget Inputs
+            const sponsorsTotal = parseFloat(document.getElementById('sponsorsTotalInput').value) || 0;
+            const sponsorsDeduct = parseFloat(document.getElementById('sponsorsDeductInput').value) || 0;
+            const sponsorsRemaining = Math.max(0, sponsorsTotal - sponsorsDeduct);
+
+            // Calculate Pool Allowed
+            const totalAllowedPool = clubDeduct + sponsorsDeduct;
+
+            // Update Displays
+            document.getElementById('clubDeductValueDisplay').innerText = `${formatNumber(clubDeduct)} ريال`;
+            document.getElementById('clubRemainingDisplay').innerText = `${formatNumber(clubRemaining)} ريال`;
+
+            document.getElementById('sponsorsDeductValueDisplay').innerText = `${formatNumber(sponsorsDeduct)} ريال`;
+            document.getElementById('sponsorsRemainingDisplay').innerText = `${formatNumber(sponsorsRemaining)} ريال`;
+
+            document.getElementById('totalAllowedDisplay').innerHTML = `${formatNumber(totalAllowedPool)} <span class="text-sm font-normal text-slate-500">ريال</span>`;
+
+            // Calculate Withdrawals Total
+            let totalWithdrawn = 0;
+            withdrawals.forEach(w => totalWithdrawn += w.amount);
+
+            const remainingAllowed = totalAllowedPool - totalWithdrawn;
+            const percentageUsed = totalAllowedPool > 0 ? Math.round((totalWithdrawn / totalAllowedPool) * 100) : 0;
+
+            document.getElementById('totalWithdrawnDisplay').innerHTML = `${formatNumber(totalWithdrawn)} <span class="text-xs font-normal">ريال</span>`;
+            
+            const remainingElem = document.getElementById('remainingAllowedDisplay');
+            remainingElem.innerHTML = `${formatNumber(remainingAllowed)} <span class="text-xs font-normal">ريال</span>`;
+
+            // Color adjustments for remaining
+            if (remainingAllowed < 0) {
+                remainingElem.className = "text-2xl font-black text-rose-600 dark:text-rose-400";
+            } else if (remainingAllowed === 0) {
+                remainingElem.className = "text-2xl font-black text-amber-600 dark:text-amber-400";
+            } else {
+                remainingElem.className = "text-2xl font-black text-emerald-600 dark:text-emerald-400";
+            }
+
+            document.getElementById('usedPercentageDisplay').innerText = `${percentageUsed}%`;
+            document.getElementById('progressText').innerText = `${formatNumber(totalWithdrawn)} من ${formatNumber(totalAllowedPool)} ريال`;
+
+            // Update Progress Bar
+            const pBar = document.getElementById('progressBar');
+            const clampedPercentage = Math.min(100, Math.max(0, percentageUsed));
+            pBar.style.width = `${clampedPercentage}%`;
+
+            if (percentageUsed > 100) {
+                pBar.className = "bg-rose-500 h-full rounded-full transition-all duration-300";
+            } else if (percentageUsed > 80) {
+                pBar.className = "bg-amber-500 h-full rounded-full transition-all duration-300";
+            } else {
+                pBar.className = "bg-brand-teal h-full rounded-full transition-all duration-300";
+            }
+
+            // Update Status Alert Banner
+            const alertBox = document.getElementById('statusAlert');
+            const alertTitle = document.getElementById('alertTitle');
+            const alertMsg = document.getElementById('alertMessage');
+
+            if (remainingAllowed < 0) {
+                alertBox.className = "p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 flex items-center gap-3";
+                alertBox.querySelector('i').className = "fa-solid fa-triangle-exclamation text-xl text-rose-500";
+                alertTitle.innerText = "⚠ تنبيه: يوجد عجز في حوض المسموح بالسحب!";
+                alertMsg.innerText = `لقد تجاوزت إجمالي المسموح بالسحب بمقدار ${formatNumber(Math.abs(remainingAllowed))} ريال. يرجى زيادة اقتطاع النادي/الرعاة أو تخفيض السحوبات.`;
+            } else if (remainingAllowed === 0 && totalAllowedPool > 0) {
+                alertBox.className = "p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 flex items-center gap-3";
+                alertBox.querySelector('i').className = "fa-solid fa-circle-exclamation text-xl text-amber-500";
+                alertTitle.innerText = "تم استهلاك الميزانية المسموحة بالكامل (100%)";
+                alertMsg.innerText = "الرصيد المتبقي المسموح يساوي صفر تماماً.";
+            } else {
+                alertBox.className = "p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-200 flex items-center gap-3";
+                alertBox.querySelector('i').className = "fa-solid fa-circle-check text-xl text-emerald-500";
+                alertTitle.innerText = "الوضع المالي للمحاكاة مريح وآمن";
+                alertMsg.innerText = `يوجد فائض في المسموح بالسحب مقداره ${formatNumber(remainingAllowed)} ريال.`;
+            }
+
+            // Render Table Rows
+            renderWithdrawalsTable(totalAllowedPool);
+        }
+
+        // Render Withdrawals Table
+        function renderWithdrawalsTable(allowedPool) {
+            const tbody = document.getElementById('withdrawalsTableBody');
+            const countBadge = document.getElementById('withdrawalCountBadge');
+            
+            countBadge.innerText = `${withdrawals.length} عمليات`;
+
+            if (withdrawals.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="emptyTableState">
+                        <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                            <i class="fa-solid fa-calculator text-4xl mb-3 block opacity-40"></i>
+                            <p class="font-bold text-sm">لم يتم تسجيل أي عملية سحب تجريبية بعد</p>
+                            <p class="text-xs opacity-80 mt-1">أضفي بنوداً من النموذج المقابل لاختبار تناقص الميزانية المسموحة.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let runningBalance = allowedPool;
+            let rowsHtml = '';
+
+            withdrawals.forEach((item, index) => {
+                runningBalance -= item.amount;
+                const balanceColor = runningBalance < 0 
+                    ? 'text-rose-600 dark:text-rose-400 font-extrabold' 
+                    : 'text-slate-700 dark:text-slate-300 font-bold';
+
+                rowsHtml += `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition">
+                        <td class="py-3 px-2 font-bold text-slate-400 text-xs">${index + 1}</td>
+                        <td class="py-3 px-2 font-bold text-slate-800 dark:text-white">${escapeHtml(item.name)}</td>
+                        <td class="py-3 px-2">
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                ${escapeHtml(item.source)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-2 font-black text-slate-800 dark:text-white">${formatNumber(item.amount)} ريال</td>
+                        <td class="py-3 px-2 ${balanceColor}">${formatNumber(runningBalance)} ريال</td>
+                        <td class="py-3 px-2 text-center">
+                            <button onclick="deleteWithdrawal(${item.id})" class="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/30 transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = rowsHtml;
+        }
+
+        // Add Withdrawal Form Submit
+        function addWithdrawal(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('itemName');
+            const amountInput = document.getElementById('itemAmount');
+            const sourceInput = document.getElementById('itemSource');
+
+            const name = nameInput.value.trim();
+            const amount = parseFloat(amountInput.value) || 0;
+            const source = sourceInput.value;
+
+            if (!name || amount <= 0) return;
+
+            withdrawals.push({
+                id: Date.now(),
+                name: name,
+                amount: amount,
+                source: source
+            });
+
+            // Reset inputs
+            nameInput.value = '';
+            amountInput.value = '';
+            
+            calculateAllowedBudget();
+        }
+
+        // Delete Individual Item
+        function deleteWithdrawal(id) {
+            withdrawals = withdrawals.filter(w => w.id !== id);
+            calculateAllowedBudget();
+        }
+
+        // Clear All Items
+        function clearAllWithdrawals() {
+            if (withdrawals.length === 0) return;
+            withdrawals = [];
+            calculateAllowedBudget();
+        }
+
+        // Reset All Simulation Settings
+        function resetSimulation() {
+            document.getElementById('clubTotalInput').value = 10000;
+            document.getElementById('clubDeductInput').value = 2000;
+            document.getElementById('sponsorsTotalInput').value = 15000;
+            document.getElementById('sponsorsDeductInput').value = 3000;
+
+            withdrawals = [
+                { id: 1, name: "تجهيزات أولية ودعاية", amount: 1200, source: "عام (حوض المسموح)" },
+                { id: 2, name: "ضيافة المتحدثين والضيوف", amount: 800, source: "مخصص للنادي" }
+            ];
+
+            calculateAllowedBudget();
+        }
+
+        // Helper to Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        // Initial Calculation on Load
+        window.onload = function() {
+            calculateAllowedBudget();
+        };
+    </script>
+</body>
+</html>
